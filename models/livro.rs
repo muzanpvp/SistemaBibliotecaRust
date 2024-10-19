@@ -1,39 +1,65 @@
 use serde::{Deserialize, Serialize};
+use std::fs::{File, OpenOptions};
+use std::io::{Read, Write};
 use uuid::Uuid;
-use std::fs::File;
-use std::io::Write;
 
-struct Livro{
-    id: Uuid,    
-    isbn: String,
-    nome: String,
-    nomeautor: String,
-    quantidade: u32
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Livro {
+    pub id: Uuid,
+    pub isbn: String,
+    pub nome: String,
+    pub nomeautor: String,
 }
 
-trait Listar{
-    fn listar_struct() -> String;
-}
-
-fn cadastrarlivro(nome_str: String, isbn_str: String, nome_str: String, nomeautor_str: String, quantidade_str: u32) -> Livro{
-   let dir = "../contexts/livros.json";
-   let mut file = File::open(dir).expect("Erro ao abrir arquivo");
-   let mut conteudos = String::new();
-   file.read_to_string(&mut conteudos).expect("Erro ao ler o arquivo");
-   
-   let livros: Vec<Livro> = serde_json::from_str(&conteudos).expect("Erro ao desserializar");
-   let livro_encontrado = livros.iter().find(|l| l.nome == nome_str);
-
-   //Se não encontrou um livro com o mesmo nome, cria um livro novo
-   if(!livro_encontrado){
-    let livro = Livro{
-        id: Uuid::new_v4();
-        nome: nome_str,
-        isbn: isbn_str,
-        nomeautor: nomeautor_str,
-        quantidade: quantidade_str
-    };
-    let livro_json = serde_json::to_string(&livro).unwrap();
-    let mut file = File::create()
+impl Livro {
+    pub fn new(isbn: String, nome: String, nomeautor: String) -> Self {
+        Livro {
+            id: Uuid::new_v4(),
+            isbn,
+            nome,
+            nomeautor,
+        }
     }
+}
+
+pub trait Listar {
+    fn listar_struct(&self) -> String;
+}
+
+impl Listar for Livro {
+    fn listar_struct(&self) -> String {
+        format!(
+            "ID: {}, ISBN: {}, Nome: {}, Nome do Autor: {}",
+            self.id, self.isbn, self.nome, self.nomeautor
+        )
+    }
+}
+
+pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<Livro, String> {
+    let dir = "contexts/livros.json";
+    let mut open_options = OpenOptions::new();
+    let create = open_options.read(true).write(true).create(true);
+
+    let mut file = create.open(dir)
+        .map_err(|_| String::from("Erro ao abrir ou criar o arquivo"))?;
+
+    let mut conteudos = String::new();
+    file.read_to_string(&mut conteudos).map_err(|_| String::from("Erro ao ler o arquivo"))?;
+
+    let mut livros: Vec<Livro> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
+
+    // Verifica se já existe um livro com o mesmo nome
+    if livros.iter().any(|l| l.nome == nome) {
+        return Err(String::from("Livro com esse nome já cadastrado"));
+    }
+
+    let livro = Livro::new(isbn, nome, nomeautor);
+
+    livros.push(livro.clone());
+    let livros_json = serde_json::to_string(&livros).map_err(|_| String::from("Erro ao serializar os livros"))?;
+
+    file.set_len(0).map_err(|_| String::from("Erro ao limpar o arquivo antes de escrever"))?;
+    file.write_all(livros_json.as_bytes()).map_err(|_| String::from("Erro ao escrever no arquivo"))?;
+
+    Ok(livro)
 }

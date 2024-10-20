@@ -1,3 +1,3 @@
 pub mod livro;
 pub mod pessoa;
-mod emprestimo;
+pub(crate) mod emprestimo;

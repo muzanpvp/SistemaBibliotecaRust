@@ -36,7 +36,7 @@ impl Listar for Livro {
 }
 
 pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<Livro, String> {
-    let dir = "contexts/livros.json";
+    let dir = "livros.json";
     let mut open_options = OpenOptions::new();
     let create = open_options.read(true).write(true).create(true);
 
@@ -47,11 +47,6 @@ pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<
     file.read_to_string(&mut conteudos).map_err(|_| String::from("Erro ao ler o arquivo"))?;
 
     let mut livros: Vec<Livro> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
-
-    // Verifica se já existe um livro com o mesmo nome
-    if livros.iter().any(|l| l.nome == nome) {
-        return Err(String::from("Livro com esse nome já cadastrado"));
-    }
 
     let livro = Livro::new(isbn, nome, nomeautor);
 

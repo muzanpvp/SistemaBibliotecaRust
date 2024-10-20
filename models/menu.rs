@@ -1,8 +1,8 @@
 use std::io;
 
 use crate::models::{
-    emprestimo::emprestar,
-    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis, Listar},
+    emprestimo::{devolver, emprestar},
+    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis},
     pessoa::{buscar_pessoa, cadastrar_pessoa}
 };
 
@@ -20,7 +20,8 @@ pub fn menu() {
     let mut nome = String::new();
     let mut nome_autor = String::new();
     let mut isbn = String::new();
-    let mut cpf = String::new(); // Corrigido aqui
+    let mut cpf = String::new(); 
+    
 
     while op != "0" {
         op.clear();
@@ -97,7 +98,7 @@ pub fn menu() {
                             .expect("Falha ao ler a linha");
 
                         match buscar_livro(isbn.trim().to_string()) {
-                            Ok(livro) => match emprestar(pessoa, livro) {
+                            Ok(livro) => match devolver(pessoa, livro) {
                                 Ok(_) => println!("Devolução realizada com sucesso."),
                                 Err(e) => println!("Erro ao realizar a devolução: {}", e),
                             },

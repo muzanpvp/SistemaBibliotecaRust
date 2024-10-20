@@ -1,9 +1,9 @@
 use crate::models::livro::Livro;
 use crate::models::pessoa::Pessoa;
-use chrono::{DateTime, Duration, Local, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::{Read, Write, Seek, SeekFrom};
 use uuid::Uuid;
 
 use super::livro::cadastrar_livro;
@@ -29,13 +29,13 @@ impl Emprestimo {
     }
 }
 
-pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String> {
-    let dir_livro = "livros.json";
+pub fn emprestar(pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String> {
+    //let dir_livro = "livros.json";
     let mut open_options = OpenOptions::new();
     let create = open_options.read(true).write(false).create(false);
 
     let mut file_livro = create
-        .open(dir_livro)
+        .open("livros.json")
         .map_err(|_| String::from("Erro ao abrir o arquivo de livros"))?;
 
     let mut conteudos_livro = String::new();
@@ -44,12 +44,12 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
 
     let mut livros: Vec<Livro> = serde_json::from_str(&conteudos_livro).unwrap_or_else(|_| vec![]);
 
-    let dir_pessoa = "pessoas.json";
+    //let dir_pessoa = "pessoas.json";
     let mut file_pessoa = OpenOptions::new()
         .read(true)
         .write(false)
         .create(false)
-        .open(dir_pessoa)
+        .open("pessoas.json")
         .map_err(|_| String::from("Erro ao abrir o arquivo de pessoas"))?;
 
     let mut conteudos_pessoa = String::new();
@@ -59,7 +59,7 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
     let mut pessoas: Vec<Pessoa> = serde_json::from_str(&conteudos_pessoa).unwrap_or_else(|_| vec![]);
 
     // Verifica se a pessoa está registrada
-    if let Some(pos_pessoa) = pessoas.iter_mut().find(|p| p.id == pessoa.id) {
+    if let Some(_pos_pessoa) = pessoas.iter_mut().find(|p| p.id == pessoa.id) {
         if let Some(pos_livro) = livros.iter().position(|l| *l == livro) {
             // Remover o livro da lista de livros
             livros.remove(pos_livro);
@@ -71,7 +71,7 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
             let mut file_livro = OpenOptions::new()
                 .write(true)
                 .truncate(true)
-                .open(dir_livro)
+                .open("livros.json")
                 .map_err(|_| String::from("Erro ao abrir o arquivo de livros para escrita"))?;
 
             file_livro.write_all(livros_atualizados.as_bytes())
@@ -101,6 +101,7 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
 
             file_emprestimo.set_len(0)
                 .map_err(|_| String::from("Erro ao limpar o arquivo de empréstimos"))?;
+            file_emprestimo.seek(SeekFrom::Start(0)).map_err(|_| String::from("Erro ao reposicionar o cursor no arquivo"))?;
             file_emprestimo.write_all(emprestimos_json.as_bytes())
                 .map_err(|_| String::from("Erro ao escrever no arquivo de empréstimos"))?;
             file_emprestimo.flush().map_err(|_| String::from("Erro ao garantir que os dados sejam gravados"))?; 
@@ -114,7 +115,8 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
     }
 }
 
-pub fn Devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
+
+pub fn devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
     // Adiciona o livro que está sendo devolvido à lista de livros
     cadastrar_livro(livro.nome.clone(), livro.isbn.clone(), livro.nomeautor.clone())?;
 

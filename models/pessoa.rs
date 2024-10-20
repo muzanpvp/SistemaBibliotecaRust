@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use crate::models::livro::Livro;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)] 
 pub struct Pessoa {
     pub id: Uuid,
     pub nome: String,
@@ -18,7 +18,7 @@ impl Pessoa {
             id: Uuid::new_v4(),
             nome,
             cpf,
-            livros_pendentes: Vec::new(), // Inicializa o vetor corretamente
+            livros_pendentes: Vec::new(), 
         }
     }
 }

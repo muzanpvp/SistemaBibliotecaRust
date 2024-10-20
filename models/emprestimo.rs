@@ -116,9 +116,7 @@ pub fn emprestar(pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String> {
 }
 
 
-pub fn devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
-    // Adiciona o livro que está sendo devolvido à lista de livros
-    cadastrar_livro(livro.nome.clone(), livro.isbn.clone(), livro.nomeautor.clone())?;
+pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
 
     // Remover da lista de empréstimos
     let dir = "emprestimo.json";
@@ -130,7 +128,10 @@ pub fn devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
         .map_err(|_| String::from("Erro ao ler o arquivo de empréstimos"))?;
     let mut emprestimos: Vec<Emprestimo> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
 
-    if let Some(pos) = emprestimos.iter().position(|e| e.livro == livro && e.pessoa.id == pessoa.id) {
+    if let Some(pos) = emprestimos.iter().position(|e| e.livro.isbn == isbn && e.pessoa.id == pessoa.id) {
+        // Adiciona o livro que está sendo devolvido à lista de livros
+        let livro_devolvido = &emprestimos[pos].livro;
+        cadastrar_livro(livro_devolvido.nome.clone(), livro_devolvido.isbn.clone(), livro_devolvido.nomeautor.clone())?;
         emprestimos.remove(pos);
 
         let emprestimos_json = serde_json::to_string(&emprestimos)
@@ -145,3 +146,4 @@ pub fn devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
         Err(String::from("Empréstimo não encontrado"))
     }
 }
+//pub fn busca_emprestado(isbn )

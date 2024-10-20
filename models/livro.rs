@@ -48,6 +48,13 @@ pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<
 
     let livro = Livro::new(isbn, nome, nomeautor);
     livros.push(livro.clone());
+    
+    for l in &livros {
+        if livro.isbn == l.isbn && (livro.nome != l.nome || livro.nomeautor != l.nomeautor) {
+            return Err(String::from("Não foi possível realizar o cadastro... confira o ISBN"));
+        }
+    }
+    
 
     let livros_json = serde_json::to_string(&livros).map_err(|_| String::from("Erro ao serializar os livros"))?;
     file.set_len(0).map_err(|_| String::from("Erro ao limpar o arquivo antes de escrever"))?;

@@ -6,6 +6,8 @@ use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use uuid::Uuid;
 
+use super::livro::cadastrar_livro;
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Emprestimo {
     pub id: Uuid,
@@ -101,22 +103,7 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
                 .map_err(|_| String::from("Erro ao limpar o arquivo de empréstimos"))?;
             file_emprestimo.write_all(emprestimos_json.as_bytes())
                 .map_err(|_| String::from("Erro ao escrever no arquivo de empréstimos"))?;
-
-            // Atualizar livros pendentes da pessoa
-            pos_pessoa.livros_pendentes.push(livro.clone());
-
-            // Atualizar o arquivo de pessoas
-            let pessoas_atualizadas = serde_json::to_string_pretty(&pessoas)
-                .map_err(|_| String::from("Erro ao serializar as pessoas"))?;
-
-            let mut file_pessoa = OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .open(dir_pessoa)
-                .map_err(|_| String::from("Erro ao abrir o arquivo de pessoas para escrita"))?;
-
-            file_pessoa.write_all(pessoas_atualizadas.as_bytes())
-                .map_err(|_| String::from("Erro ao escrever no arquivo de pessoas"))?;
+            file_emprestimo.flush().map_err(|_| String::from("Erro ao garantir que os dados sejam gravados"))?; 
 
             Ok(novo_emprestimo)
         } else {
@@ -127,3 +114,32 @@ pub fn emprestar(mut pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String>
     }
 }
 
+pub fn Devolver(pessoa: Pessoa, livro: Livro) -> Result<(), String> {
+    // Adiciona o livro que está sendo devolvido à lista de livros
+    cadastrar_livro(livro.nome.clone(), livro.isbn.clone(), livro.nomeautor.clone())?;
+
+    // Remover da lista de empréstimos
+    let dir = "emprestimo.json";
+    let mut file = OpenOptions::new().read(true).write(true).create(true).open(dir)
+        .map_err(|_| String::from("Erro ao abrir o arquivo de empréstimos"))?;
+
+    let mut conteudos = String::new();
+    file.read_to_string(&mut conteudos)
+        .map_err(|_| String::from("Erro ao ler o arquivo de empréstimos"))?;
+    let mut emprestimos: Vec<Emprestimo> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
+
+    if let Some(pos) = emprestimos.iter().position(|e| e.livro == livro && e.pessoa.id == pessoa.id) {
+        emprestimos.remove(pos);
+
+        let emprestimos_json = serde_json::to_string(&emprestimos)
+            .map_err(|_| String::from("Erro ao serializar os empréstimos"))?;
+        file.set_len(0).map_err(|_| String::from("Erro ao limpar o arquivo de empréstimos"))?;
+        file.write_all(emprestimos_json.as_bytes())
+            .map_err(|_| String::from("Erro ao escrever no arquivo de empréstimos"))?;
+        file.flush().map_err(|_| String::from("Erro ao garantir que os dados sejam gravados"))?;
+
+        Ok(())
+    } else {
+        Err(String::from("Empréstimo não encontrado"))
+    }
+}

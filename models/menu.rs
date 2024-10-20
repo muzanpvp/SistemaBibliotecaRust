@@ -2,7 +2,7 @@ use std::io;
 
 use crate::models::{
     emprestimo::{devolver, emprestar, listar_emprestados},
-    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis},
+    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis,listarlivroporautor},
     pessoa::{buscar_pessoa, cadastrar_pessoa},
 };
 
@@ -15,6 +15,7 @@ fn perfumaria_menu(){
     println!("4 - Cadastro de pessoas");
     println!("5 - Listar livros disponíveis");
     println!("6 - Listar livros emprestados");
+    println!("7 - Listar livros por autor");	
     println!("0 - Sair");
 }
 
@@ -134,13 +135,21 @@ pub fn menu() {
             "5" => {
                 listar_livros_disponiveis();
             }
-            "0" => {
-                println!("Saindo...");
-                break;
-            }
             "6" => {
                 println!("Livros empretados: ");
                 listar_emprestados();
+            }
+            "7" => {
+                nome_autor.clear();
+                println!("Nome do autor:");
+                io::stdin()
+                    .read_line(&mut nome_autor)
+                    .expect("Falha ao ler a linha");
+                listarlivroporautor(nome_autor.trim().to_string());
+            }
+            "0" => {
+                println!("Saindo...");
+                break;
             }
             _ => {
                 println!("Opção inválida, tente novamente.");

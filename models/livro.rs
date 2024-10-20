@@ -29,7 +29,7 @@ pub trait Listar {
 impl Listar for Livro {
     fn listar_struct(&self) -> String {
         format!(
-            "\nISBN: {}, \nNome: {}, \nNome do Autor: {}",
+            "\nISBN: {}, \nNome: {}, \nNome do Autor: {}\n",
             self.isbn, self.nome, self.nomeautor
         )
     }
@@ -123,4 +123,40 @@ pub fn listar_livros_disponiveis() {
         let info = livro.listar_struct();
         println!("{}", info);
     }
+}
+
+pub fn listarlivroporautor(nome_str : String){
+    let file = OpenOptions::new()
+    .read(true)
+    .write(false)
+    .create(false)
+    .open("livros.json");
+
+let mut file = match file {
+    Ok(file) => file,
+    Err(_) => {
+        println!("Arquivo de livros não encontrado.");
+        return;
+    }
+};
+
+let mut conteudos = String::new();
+file.read_to_string(&mut conteudos)
+    .expect("Erro ao ler o arquivo livros.json");
+
+let conteudos = conteudos.trim();
+if conteudos.is_empty() {
+    println!("Nenhum livro disponível.");
+    return;
+}
+let livros: Vec<Livro> =
+    serde_json::from_str(conteudos).expect("Erro ao deserializar os livros");
+
+println!("Livros do autor {}",nome_str);
+for livro in livros {
+   if livro.nomeautor == nome_str {
+       let info = livro.listar_struct();
+       println!("{}",info);
+   }
+}
 }

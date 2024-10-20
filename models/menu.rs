@@ -1,12 +1,12 @@
 use std::io;
 
 use crate::models::{
-    emprestimo::{devolver, emprestar},
+    emprestimo::{devolver, emprestar, listar_emprestados},
     livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis},
     pessoa::{buscar_pessoa, cadastrar_pessoa},
 };
 
-pub fn menu() {
+fn perfumaria_menu(){
     println!("BEM-VINDO AO SIBLIB");
     println!("O QUE DESEJA FAZER?");
     println!("1 - Cadastro de livro");
@@ -14,7 +14,11 @@ pub fn menu() {
     println!("3 - Devolução");
     println!("4 - Cadastro de pessoas");
     println!("5 - Listar livros disponíveis");
+    println!("6 - Listar livros emprestados");
     println!("0 - Sair");
+}
+
+pub fn menu() {
 
     let mut op = String::new();
     let mut nome = String::new();
@@ -23,6 +27,7 @@ pub fn menu() {
     let mut cpf = String::new();
 
     while op != "0" {
+        perfumaria_menu();
         op.clear();
         println!("Escolha uma opção:");
         io::stdin()
@@ -127,12 +132,15 @@ pub fn menu() {
                 }
             }
             "5" => {
-                println!("Lista de livros disponíveis");
                 listar_livros_disponiveis();
             }
             "0" => {
                 println!("Saindo...");
                 break;
+            }
+            "6" => {
+                println!("Livros empretados: ");
+                listar_emprestados();
             }
             _ => {
                 println!("Opção inválida, tente novamente.");

@@ -10,16 +10,6 @@ pub struct Pessoa {
     pub cpf: String,
 }
 
-/*impl Pessoa {
-    pub fn new(nome: String, cpf: String) -> Self {
-        Pessoa {
-            id: Uuid::new_v4(),
-            nome,
-            cpf, 
-        }
-    }
-}*/
-
 pub fn cadastrar_pessoa(nome_pessoa: String, cpf_pessoa: String) -> Result<Pessoa, String> {
    // let dir = "pessoas.json";
     let mut file = OpenOptions::new()

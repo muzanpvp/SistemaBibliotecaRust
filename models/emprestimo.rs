@@ -82,7 +82,7 @@ pub fn emprestar(pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String> {
                 .map_err(|_| String::from("Erro ao escrever no arquivo de livros"))?;
 
             // Registrar o empréstimo
-            let dir = "emprestimo.json";
+            let dir = "emprestimos.json";
             let mut file_emprestimo = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -131,7 +131,7 @@ pub fn emprestar(pessoa: Pessoa, livro: Livro) -> Result<Emprestimo, String> {
 
 pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
     // Remover da lista de empréstimos
-    let dir = "emprestimo.json";
+    let dir = "emprestimos.json";
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -152,8 +152,8 @@ pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
         // Adiciona o livro que está sendo devolvido à lista de livros
         let livro_devolvido = &emprestimos[pos].livro;
         cadastrar_livro(
-            livro_devolvido.nome.clone(),
             livro_devolvido.isbn.clone(),
+            livro_devolvido.nome.clone(),
             livro_devolvido.nomeautor.clone(),
         )?;
         emprestimos.remove(pos);
@@ -173,19 +173,21 @@ pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
     }
 }
 pub fn listar_emprestados() {
-    let file = OpenOptions::new()
+    let mut file = OpenOptions::new()
         .read(true)
-        .write(false)
+        .write(true)
         .create(true)
-        .open("emprestimo.json");
+        .open("emprestimos.json")
+        .map_err(|_| String::from("Erro ao abrir o arquivo de empréstimos"));
 
-    let mut file = match file {
-        Ok(file) => file,
-        Err(_) => {
-            println!("Arquivo de livros não encontrado.");
-            return;
-        }
-    };
+        let mut file = match file {
+            Ok(file) => file,
+            Err(_) => {
+                println!("Arquivo de livros não encontrado.");
+                return;
+            }
+        };
+
     let mut conteudos = String::new();
     file
         .read_to_string(&mut conteudos)
@@ -198,7 +200,6 @@ pub fn listar_emprestados() {
 
     let emprestimos: Vec<Emprestimo> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
 
-    println!("Lista de livros disponíveis: ");
     for e in emprestimos {
         let info = e.livro.listar_struct();
         print!("{}", info);

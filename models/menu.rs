@@ -136,7 +136,7 @@ pub fn menu() {
                 listar_livros_disponiveis();
             }
             "6" => {
-                println!("Livros empretados: ");
+                println!("Livros emprestados: ");
                 listar_emprestados();
             }
             "7" => {

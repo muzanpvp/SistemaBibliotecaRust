@@ -1,12 +1,14 @@
 use crate::models::livro::{Listar, Livro};
 use crate::models::pessoa::Pessoa;
-use chrono::{DateTime, Utc};
+use crate::models::multa::Multa;
+use chrono::{Date, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use uuid::Uuid;
 
 use super::livro::cadastrar_livro;
+use super::multa::cadastrarmulta;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Emprestimo {
@@ -23,7 +25,7 @@ impl Emprestimo {
             id: Uuid::new_v4(),
             livro,
             data_emprestimo: Utc::now(),
-            data_devolucao: Utc::now() + chrono::Duration::days(10),
+            data_devolucao: Utc::now() + chrono::Duration::seconds(10),
             pessoa,
         }
     }
@@ -155,8 +157,10 @@ pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
             livro_devolvido.isbn.clone(),
             livro_devolvido.nome.clone(),
             livro_devolvido.nomeautor.clone(),
+            livro_devolvido.ano.clone(),    
         )?;
-        emprestimos.remove(pos);
+        let emprestimo_devolvido = emprestimos.remove(pos);
+
 
         let emprestimos_json = serde_json::to_string(&emprestimos)
             .map_err(|_| String::from("Erro ao serializar os empréstimos"))?;
@@ -166,6 +170,14 @@ pub fn devolver(pessoa: Pessoa, isbn: String) -> Result<(), String> {
             .map_err(|_| String::from("Erro ao escrever no arquivo de empréstimos"))?;
         file.flush()
             .map_err(|_| String::from("Erro ao garantir que os dados sejam gravados"))?;
+        
+        let mut data_atual = Utc::now();
+        let mut taxa: f64 = 2.0;
+        if emprestimo_devolvido.data_devolucao <= data_atual{
+            println!("Empréstimo devolvido com atraso!");
+            println!("Data de devolução: {}", data_atual.format("%d/%m/%Y %H:%M:%S"));
+            cadastrarmulta(pessoa, taxa);
+        }
 
         Ok(())
     } else {

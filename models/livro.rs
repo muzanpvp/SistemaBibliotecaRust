@@ -9,15 +9,17 @@ pub struct Livro {
     pub isbn: String,
     pub nome: String,
     pub nomeautor: String,
+    pub ano: String
 }
 
 impl Livro {
-    pub fn new(isbn: String, nome: String, nomeautor: String) -> Self {
+    pub fn new(isbn: String, nome: String, nomeautor: String, ano: String) -> Self {
         Livro {
             id: Uuid::new_v4(),
             isbn,
             nome,
             nomeautor,
+            ano
         }
     }
 }
@@ -29,13 +31,13 @@ pub trait Listar {
 impl Listar for Livro {
     fn listar_struct(&self) -> String {
         format!(
-            "\nISBN: {}, \nNome: {}, \nNome do Autor: {}\n",
-            self.isbn, self.nome, self.nomeautor
+            "\nISBN: {}, \nNome: {}, \nNome do Autor: {},\nAno: {}\n",
+            self.isbn, self.nome, self.nomeautor, self.ano
         )
     }
 }
 
-pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<Livro, String> {
+pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String, ano: String  ) -> Result<Livro, String> {
     let mut open_options = OpenOptions::new();
     let create = open_options.read(true).write(true).create(true);
     let mut file = create
@@ -46,7 +48,7 @@ pub fn cadastrar_livro(isbn: String, nome: String, nomeautor: String) -> Result<
         .map_err(|_| String::from("Erro ao ler o arquivo"))?;
     let mut livros: Vec<Livro> = serde_json::from_str(&conteudos).unwrap_or_else(|_| vec![]);
 
-    let livro = Livro::new(isbn, nome, nomeautor);
+    let livro = Livro::new(isbn, nome, nomeautor,ano);
     livros.push(livro.clone());
 
     for l in &livros {
@@ -155,6 +157,42 @@ let livros: Vec<Livro> =
 println!("Livros do autor {}",nome_str);
 for livro in livros {
    if livro.nomeautor == nome_str {
+       let info = livro.listar_struct();
+       println!("{}",info);
+   }
+}
+}
+
+pub fn listarlivroporano(ano_str: String){
+    let file = OpenOptions::new()
+    .read(true)
+    .write(false)
+    .create(false)
+    .open("livros.json");
+
+let mut file = match file {
+    Ok(file) => file,
+    Err(_) => {
+        println!("Arquivo de livros não encontrado.");
+        return;
+    }
+};
+
+let mut conteudos = String::new();
+file.read_to_string(&mut conteudos)
+    .expect("Erro ao ler o arquivo livros.json");
+
+let conteudos = conteudos.trim();
+if conteudos.is_empty() {
+    println!("Nenhum livro disponível.");
+    return;
+}
+let livros: Vec<Livro> =
+    serde_json::from_str(conteudos).expect("Erro ao deserializar os livros");
+
+println!("Livros do ano: {}",ano_str);
+for livro in livros {
+   if livro.ano == ano_str {
        let info = livro.listar_struct();
        println!("{}",info);
    }

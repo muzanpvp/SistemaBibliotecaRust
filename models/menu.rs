@@ -2,8 +2,10 @@ use std::io;
 
 use crate::models::{
     emprestimo::{devolver, emprestar, listar_emprestados},
-    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis,listarlivroporautor},
+    livro::{buscar_livro, cadastrar_livro, listar_livros_disponiveis,listarlivroporautor,listarlivroporano},
     pessoa::{buscar_pessoa, cadastrar_pessoa},
+    pagamento::{listarpagamentos,cadastrar_pagamento},
+    multa::{cadastrarmulta,listarmultas},
 };
 
 fn perfumaria_menu(){
@@ -16,6 +18,10 @@ fn perfumaria_menu(){
     println!("5 - Listar livros disponíveis");
     println!("6 - Listar livros emprestados");
     println!("7 - Listar livros por autor");	
+    println!("8 - Listar livros por ano");
+    println!("9 - Realizar pagamento");
+    println!("10 - Listar pagamentos");
+    println!("11 - Listar multas");
     println!("0 - Sair");
 }
 
@@ -26,6 +32,8 @@ pub fn menu() {
     let mut nome_autor = String::new();
     let mut isbn = String::new();
     let mut cpf = String::new();
+    let mut ano = String::new();
+    let valor_: f64;
 
     while op != "0" {
         perfumaria_menu();
@@ -37,6 +45,7 @@ pub fn menu() {
         isbn.clear();
         nome.clear();
         nome_autor.clear();
+        ano.clear();
 
         match op.trim() {
             "1" => {
@@ -52,11 +61,16 @@ pub fn menu() {
                 io::stdin()
                     .read_line(&mut nome_autor)
                     .expect("Falha ao ler a linha");
+                println!("Ano: ");
+                io::stdin()
+                    .read_line(&mut ano)
+                    .expect("Falha ao ler a linha");
 
                 match cadastrar_livro(
                     isbn.trim().to_string(),
                     nome.trim().to_string(),
                     nome_autor.trim().to_string(),
+                    ano.trim().to_string(),
                 ) {
                     Ok(livro) => println!("Livro cadastrado com sucesso: {:?}", livro),
                     Err(e) => println!("Erro ao cadastrar o livro: {}", e),
@@ -146,6 +160,54 @@ pub fn menu() {
                     .read_line(&mut nome_autor)
                     .expect("Falha ao ler a linha");
                 listarlivroporautor(nome_autor.trim().to_string());
+            }
+            "8" => {
+                ano.clear();
+                println!("Ano dos livros:");
+                io::stdin()
+                    .read_line(&mut ano)
+                    .expect("Falha ao ler a linha");
+                listarlivroporano(ano.trim().to_string());
+            }
+            "9" => {
+                cpf.clear();
+                println!("CPF: ");
+                io::stdin()
+                    .read_line(&mut cpf)
+                    .expect("Falha ao ler a linha");
+                
+                println!("Valor: ");
+               
+                let mut valor_str = String::new();
+                io::stdin()
+                    .read_line(&mut valor_str)
+                    .expect("Falha ao ler o valor do pagamento");
+            
+                // Converter a string para f64
+                let valor: f64 = match valor_str.trim().parse() {
+                    Ok(num) => num,
+                    Err(_) => {
+                        println!("Valor inválido. Por favor, digite um número.");
+                        continue;
+                    }
+                };
+
+                match buscar_pessoa(cpf.trim().to_string()) {
+                    Ok(pessoa) => {
+                        match cadastrar_pagamento(pessoa, valor) {
+                            Ok(_) => println!("Pagamento cadastrado com sucesso."),
+                            Err(e) => println!("Erro ao cadastrar o pagamento: {}", e),
+                        }
+                    }
+                    Err(e) => println!("Erro ao buscar a pessoa: {}", e),
+                }
+        }
+        "10" => {
+                listarpagamentos();
+            }
+        "11" => {
+                println!("Multas:");
+                listarmultas();
             }
             "0" => {
                 println!("Saindo...");
